@@ -1,24 +1,29 @@
 // server/routes/productRoutes.js
-
-// Use 'import' instead of 'require'
-import express from 'express';
-import multer from 'multer';
-import productController from '../controllers/productController.js'; // Must include .js
-import authMiddleware from '../middleware/authMiddleware.js';     // Must include .js
-
-// 'router' initialization is the same
+const express = require('express');
+const multer = require('multer');
+const productController = require('../controllers/productController.js');
+const authMiddleware = require('../middleware/authMiddleware.js');
 const router = express.Router();
 
-// Multer configuration is the same
+// Configure multer to handle file uploads.
 const upload = multer({ dest: 'uploads/' });
 
-// Route definitions are the same
+// Public route to get all products (with filtering).
 router.get('/', productController.getAllProducts);
+
+// Public route to get all products for a specific user.
 router.get('/user/:userId', productController.getProductsByUserId);
+
+// Public route to get a single product by its ID.
 router.get('/:id', productController.getProductById);
+
+// Private route to create a new product.
 router.post('/', authMiddleware, upload.single('image'), productController.createProduct);
+
+// Private route to update a product.
 router.put('/:id', authMiddleware, upload.single('image'), productController.updateProduct);
+
+// Private route to delete a product.
 router.delete('/:id', authMiddleware, productController.deleteProduct);
 
-// Use 'export default' instead of 'module.exports'
-export default router;
+module.exports = router;

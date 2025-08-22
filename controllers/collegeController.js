@@ -1,4 +1,5 @@
-import College from '../models/College.js';
+// server/controllers/collegeController.js
+const College = require('../models/College.js');
 
 // Handles fetching the list of all colleges.
 const getAllColleges = async (req, res) => {
@@ -11,4 +12,4 @@ const getAllColleges = async (req, res) => {
   }
 };
 
-export default { getAllColleges };
+module.exports = { getAllColleges };

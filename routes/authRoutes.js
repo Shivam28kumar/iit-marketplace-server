@@ -1,22 +1,19 @@
 // server/routes/authRoutes.js
-import express from 'express';
-import authController from '../controllers/authController.js'; // Import the controller object
-
+const express = require('express');
+const authController = require('../controllers/authController.js');
 const router = express.Router();
 
-// Route for handling user registration (sends an OTP)
+// Defines the endpoint for user registration.
 router.post('/register', authController.registerUser);
 
-// Route for handling user login (for already verified users)
+// Defines the endpoint for user login.
 router.post('/login', authController.loginUser);
 
-// --- THIS IS THE FIX ---
-// This line defines the route that the frontend calls when submitting the OTP.
-// It links the '/verify-email' path to the 'verifyEmail' function in our controller.
+// Defines the endpoint for submitting an email verification OTP.
 router.post('/verify-email', authController.verifyEmail);
 
-// We will add routes for password reset here later.
+// Defines the endpoints for the forgot/reset password flow.
 router.post('/forgot-password', authController.forgotPassword);
 router.post('/reset-password', authController.resetPassword);
-// Export the router so it can be used by server.js
-export default router;
+
+module.exports = router;

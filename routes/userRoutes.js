@@ -1,21 +1,19 @@
 // server/routes/userRoutes.js
-
-// Use 'import' instead of 'require'
-import express from 'express';
-import userController from '../controllers/userController.js';   // Must include .js
-import authMiddleware from '../middleware/authMiddleware.js';     // Must include .js
-
-// 'router' initialization is the same
+const express = require('express');
+const userController = require('../controllers/userController.js');
+const authMiddleware = require('../middleware/authMiddleware.js');
 const router = express.Router();
 
-// --- Private Routes ---
+// Private route to get the logged-in user's own profile.
 router.get('/me', authMiddleware, userController.getMe);
+
+// Private route to update the logged-in user's own profile.
 router.put('/me', authMiddleware, userController.updateMe);
+
+// Private, secure route to get another user's contact info.
 router.get('/contact/:id', authMiddleware, userController.getUserContact);
-// --- Public Route ---
-// This must come AFTER the '/me' route
+
+// Public route to get any user's public profile (must be last).
 router.get('/:id', userController.getUserProfile);
 
-
-// Use 'export default' instead of 'module.exports'
-export default router;
+module.exports = router;

@@ -1,5 +1,5 @@
 // server/models/Message.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const MessageSchema = new Schema({
@@ -17,6 +17,10 @@ const MessageSchema = new Schema({
     type: String,
     required: true,
   },
+  read: {
+    type: Boolean,
+    default: false,
+  },
 }, { timestamps: true });
 
-export default mongoose.model('Message', MessageSchema);
+module.exports = mongoose.model('Message', MessageSchema);

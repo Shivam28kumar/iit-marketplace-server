@@ -1,9 +1,8 @@
 // server/models/College.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
-// Defines the structure of a College document in the database.
 const CollegeSchema = new mongoose.Schema({
   name: { type: String, required: true, unique: true },
 });
 
-export default mongoose.model('College', CollegeSchema);
+module.exports = mongoose.model('College', CollegeSchema);

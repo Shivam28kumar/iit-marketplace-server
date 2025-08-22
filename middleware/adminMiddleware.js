@@ -1,17 +1,17 @@
 // server/middleware/adminMiddleware.js
-import User from '../models/User.js';
+const User = require('../models/User.js');
 
+// Middleware to protect admin-only routes.
+// This middleware MUST run AFTER the standard authMiddleware.
 const adminMiddleware = async (req, res, next) => {
   try {
-    // This middleware will run AFTER our standard authMiddleware,
-    // so we can be sure that req.user.id exists.
+    // We can be sure 'req.user.id' exists because authMiddleware ran first.
     const user = await User.findById(req.user.id);
 
-    // Check if the user exists and if their role is 'admin'
+    // Check if the user exists and their role is 'admin'.
     if (user && user.role === 'admin') {
-      next(); // If they are an admin, allow the request to proceed
+      next(); // If yes, allow the request to proceed.
     } else {
-      // If not, send a "Forbidden" error
       res.status(403).json({ message: 'Admin access required. Authorization denied.' });
     }
   } catch (error) {
@@ -20,4 +20,4 @@ const adminMiddleware = async (req, res, next) => {
   }
 };
 
-export default adminMiddleware;
+module.exports = adminMiddleware;

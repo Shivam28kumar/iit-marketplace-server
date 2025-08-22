@@ -1,5 +1,5 @@
 // server/models/User.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 
 const UserSchema = new mongoose.Schema({
     fullName: {
@@ -30,27 +30,14 @@ const UserSchema = new mongoose.Schema({
         enum: ['user', 'admin', 'company'],
         default: 'user'
     },
-    
-    // --- NEW FIELDS for Email Verification ---
     isEmailVerified: {
         type: Boolean,
         default: false,
     },
-    emailVerificationToken: {
-        type: String,
-    },
-    emailVerificationExpires: {
-        type: Date,
-    },
-    
-    // --- NEW FIELDS for Password Reset ---
-    passwordResetToken: {
-        type: String,
-    },
-    passwordResetExpires: {
-        type: Date,
-    },
-
+    emailVerificationToken: String,
+    emailVerificationExpires: Date,
+    passwordResetToken: String,
+    passwordResetExpires: Date,
 }, { timestamps: true });
 
-export default mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', UserSchema);

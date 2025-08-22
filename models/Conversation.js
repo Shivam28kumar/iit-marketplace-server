@@ -1,19 +1,21 @@
 // server/models/Conversation.js
-import mongoose from 'mongoose';
+const mongoose = require('mongoose');
 const Schema = mongoose.Schema;
 
 const ConversationSchema = new Schema({
-  // An array containing the IDs of the two users in the conversation
   participants: [{
     type: Schema.Types.ObjectId,
     ref: 'User',
   }],
-  product: { // <-- ADD THIS
+  product: {
     type: Schema.Types.ObjectId,
     ref: 'Product',
     required: true,
-},
-  // An array of all the messages in this conversation
+  },
+  lastMessage: {
+    type: Schema.Types.ObjectId,
+    ref: 'Message'
+  },
   messages: [{
     type: Schema.Types.ObjectId,
     ref: 'Message',
@@ -21,4 +23,4 @@ const ConversationSchema = new Schema({
   }],
 }, { timestamps: true });
 
-export default mongoose.model('Conversation', ConversationSchema);
+module.exports = mongoose.model('Conversation', ConversationSchema);

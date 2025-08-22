@@ -1,30 +1,38 @@
 // server/routes/adminRoutes.js
-import express from 'express';
-import authMiddleware from '../middleware/authMiddleware.js';
-import adminMiddleware from '../middleware/adminMiddleware.js'; // Import our new admin guard
-import adminController from '../controllers/adminController.js';
-import multer from 'multer'; 
 
+// --- MODULE IMPORTS using CommonJS 'require' ---
+const express = require('express');
+const multer = require('multer');
+const authMiddleware = require('../middleware/authMiddleware.js');
+const adminMiddleware = require('../middleware/adminMiddleware.js'); // The admin guard
+const adminController = require('../controllers/adminController.js');
+
+// Create a new router instance. This is only done once.
 const router = express.Router();
-const upload = multer({ dest: 'uploads/' }); // Configure multer
-// --- All routes in this file are protected and for admins only ---
-// The request must pass through authMiddleware first, then adminMiddleware,
-// before it can reach the controller function.
+
+// Configure multer for file uploads (specifically for banner creation).
+const upload = multer({ dest: 'uploads/' });
+
+// --- MIDDLEWARE CHAIN for Admin-Only Routes ---
+// This is a clean way to apply both security checks to our routes.
+// The request will first pass through authMiddleware, then adminMiddleware.
 const adminOnly = [authMiddleware, adminMiddleware];
 
-// User management routes
+// --- User Management Routes ---
 router.get('/users', adminOnly, adminController.getAllUsers);
 router.delete('/users/:id', adminOnly, adminController.deleteUser);
 
-// Product management routes
+// --- Product Management Routes ---
 router.delete('/products/:id', adminOnly, adminController.deleteProduct);
 
-// College management routes
+// --- College Management Routes ---
 router.post('/colleges', adminOnly, adminController.createCollege);
 router.delete('/colleges/:id', adminOnly, adminController.deleteCollege);
 
-// --- NEW BANNER ROUTES ---
+// --- Banner Management Routes ---
+// The 'createBanner' route also needs the 'upload.single('image')' middleware to handle the file.
 router.post('/banners', adminOnly, upload.single('image'), adminController.createBanner);
 router.delete('/banners/:id', adminOnly, adminController.deleteBanner);
 
-export default router;
+// --- MODULE EXPORTS using CommonJS 'module.exports' ---
+module.exports = router;

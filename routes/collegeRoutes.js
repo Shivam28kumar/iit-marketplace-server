@@ -1,14 +1,9 @@
 // server/routes/collegeRoutes.js
-
-// Use 'import' instead of 'require'
-import express from 'express';
-import collegeController from '../controllers/collegeController.js'; // Must include .js
-
-// 'router' initialization is the same
+const express = require('express');
+const collegeController = require('../controllers/collegeController.js');
 const router = express.Router();
 
-// Route definition is the same
+// Public route to get the list of all colleges.
 router.get('/', collegeController.getAllColleges);
 
-// Use 'export default' instead of 'module.exports'
-export default router;
+module.exports = router;

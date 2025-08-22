@@ -1,9 +1,9 @@
 // server/utils/otpGenerator.js
 
+// Generates a random 6-digit number as a string.
 const generateOTP = () => {
-  // Generate a 6-digit random number
   const otp = Math.floor(100000 + Math.random() * 900000);
-  return otp.toString(); // Convert it to a string
+  return otp.toString();
 };
 
-export default generateOTP;
+module.exports = generateOTP;

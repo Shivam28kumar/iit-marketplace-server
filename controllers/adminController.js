@@ -1,9 +1,11 @@
 // server/controllers/adminController.js
-import User from '../models/User.js';
-import Product from '../models/Product.js';
-import College from '../models/College.js';
-import Banner from '../models/Banner.js';
-import cloudinary from '../config/cloudinary.js'; // <-- THIS IS THE CRITICAL FIX
+
+// --- MODULE IMPORTS using CommonJS 'require' ---
+const User = require('../models/User.js');
+const Product = require('../models/Product.js');
+const College = require('../models/College.js');
+const Banner = require('../models/Banner.js');
+const cloudinary = require('../config/cloudinary.js');
 
 // --- User Management ---
 
@@ -42,7 +44,6 @@ const deleteProduct = async (req, res) => {
         if (!product) {
             return res.status(404).json({ message: 'Product not found' });
         }
-        // You may also want to delete the image from Cloudinary here in the future
         await Product.findByIdAndDelete(req.params.id);
         res.json({ message: 'Product removed by admin' });
     } catch (err) {
@@ -126,8 +127,9 @@ const deleteBanner = async (req, res) => {
     }
 };
 
-// Export all functions so they can be used by the router.
-export default {
+// --- MODULE EXPORTS using CommonJS 'module.exports' ---
+// This makes all the functions available for the admin router to use.
+module.exports = {
     getAllUsers,
     deleteUser,
     deleteProduct,

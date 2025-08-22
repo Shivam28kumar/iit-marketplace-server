@@ -1,8 +1,9 @@
 // server/routes/bannerRoutes.js
-import express from 'express';
-import bannerController from '../controllers/bannerController.js';
+const express = require('express');
+const bannerController = require('../controllers/bannerController.js');
 const router = express.Router();
 
+// Public route to get all active banners.
 router.get('/', bannerController.getActiveBanners);
 
-export default router;
+module.exports = router;
