@@ -5,7 +5,7 @@ import cors from 'cors';
 import express from 'express';
 import { app, server } from './socket/socket.js'; // Import app and server from socket.js
 import bannerRoutes from './routes/bannerRoutes.js';
-
+import { app, server } from './socket/socket.js';
 
 // Import routes
 import authRoutes from './routes/authRoutes.js';
@@ -36,6 +36,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/colleges', collegeRoutes);
 app.use('/api/banners', bannerRoutes);
+app.use('/api/chat', chatRoutes);
+app.use('/api/admin', adminRoutes);
 // app.use('/api/messages', messageRoutes); // We will add this
 
 server.listen(PORT, () => {
