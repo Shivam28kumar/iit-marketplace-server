@@ -1,20 +1,22 @@
 // server/routes/authRoutes.js
-const express = require('express');
+import express from 'express';
+import authController from '../controllers/authController.js'; // Import the controller object
+
 const router = express.Router();
 
-// STEP 1: Import the entire controller object
-const authController = require('../controllers/authController');
-
-// @route   POST /api/auth/register
-// @desc    Register a new user
-// @access  Public
-// STEP 2: Use the registerUser function from the controller object
+// Route for handling user registration (sends an OTP)
 router.post('/register', authController.registerUser);
 
-// @route   POST /api/auth/login
-// @desc    Authenticate user & get token
-// @access  Public
-// STEP 3: Use the loginUser function from the controller object
+// Route for handling user login (for already verified users)
 router.post('/login', authController.loginUser);
 
-module.exports = router;
+// --- THIS IS THE FIX ---
+// This line defines the route that the frontend calls when submitting the OTP.
+// It links the '/verify-email' path to the 'verifyEmail' function in our controller.
+router.post('/verify-email', authController.verifyEmail);
+
+// We will add routes for password reset here later.
+router.post('/forgot-password', authController.forgotPassword);
+router.post('/reset-password', authController.resetPassword);
+// Export the router so it can be used by server.js
+export default router;
