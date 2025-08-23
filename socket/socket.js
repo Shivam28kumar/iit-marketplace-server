@@ -11,7 +11,7 @@ const app = express();
 const server = http.createServer(app);
 
 // --- Production-Ready CORS Configuration ---
-const whitelist = ['http://localhost:3000', 'https://iit-marketplace-client-shivam28kumars-projects.vercel.app']; // Make sure your Vercel URL is correct
+const whitelist = ['http://localhost:3000','https://iit-marketplace-client.vercel.app/']; // Make sure your Vercel URL is correct
 const corsOptions = {
   origin: function (origin, callback) {
     if (whitelist.indexOf(origin) !== -1 || !origin) {
