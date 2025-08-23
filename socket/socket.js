@@ -4,41 +4,50 @@ const http = require('http');
 const express = require('express');
 const cors = require('cors');
 
-// Create the Express app instance.
 const app = express();
-
-// Create the base HTTP server from the Express app.
 const server = http.createServer(app);
 
-// --- Production-Ready CORS Configuration ---
-const whitelist = ['http://localhost:3000','https://iit-marketplace-client.vercel.app/']; // Make sure your Vercel URL is correct
+// --- THIS IS THE FINAL, ROBUST CORS CONFIGURATION ---
+
+// Define your specific allowed origins.
+const allowedOrigins = [
+    'http://localhost:3000',
+    'https://iit-marketplace-client.vercel.app' // VERIFY THIS IS YOUR EXACT VERCEL URL
+];
+
+// Configure the CORS options.
 const corsOptions = {
-  origin: function (origin, callback) {
-    if (whitelist.indexOf(origin) !== -1 || !origin) {
-      callback(null, true);
-    } else {
-      callback(new Error('Not allowed by CORS'));
+  // The origin can be a function that dynamically checks the whitelist.
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.indexOf(origin) === -1) {
+      const msg = 'The CORS policy for this site does not allow access from the specified Origin.';
+      return callback(new Error(msg), false);
     }
+    return callback(null, true);
   },
+  // This is important for some browsers.
+  credentials: true,
 };
 
-// Create the Socket.io server, configured with our CORS options.
-const io = new Server(server, {
-    cors: corsOptions,
-});
-
-// --- Apply CORS Middleware to the Express App ---
+// --- Apply the CORS middleware to the ENTIRE Express app FIRST ---
+// This will handle the preflight requests for all your API routes.
 app.use(cors(corsOptions));
 
-// --- Socket.io Logic ---
-const userSocketMap = {}; // Maps a userId to their unique socketId
+// Now, create the Socket.io server and pass it the same origin list.
+const io = new Server(server, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ["GET", "POST"]
+    },
+});
+// --- END OF FIX ---
 
-// Helper function to get a user's socket ID if they are online.
-const getReceiverSocketId = (receiverId) => {
-    return userSocketMap[receiverId];
-};
 
-// This function runs every time a new client connects via WebSocket.
+const userSocketMap = {};
+const getReceiverSocketId = (receiverId) => { return userSocketMap[receiverId]; };
+
 io.on('connection', (socket) => {
     console.log("A user connected via WebSocket:", socket.id);
     const userId = socket.handshake.query.userId;
@@ -55,6 +64,4 @@ io.on('connection', (socket) => {
     });
 });
 
-// --- MODULE EXPORTS using CommonJS 'module.exports' ---
-// We export the configured 'app', 'io', 'server', and the helper function.
 module.exports = { app, io, server, getReceiverSocketId };
