@@ -3,7 +3,6 @@ const Product = require('../models/Product.js');
 const User = require('../models/User.js');
 const cloudinary = require('../config/cloudinary.js');
 
-// --- CREATE a new product (Role-aware) ---
 const createProduct = async (req, res) => {
   const { title, description, price, category, visibleIn } = req.body;
   if (!req.file) return res.status(400).json({ message: 'Please upload an image' });
@@ -27,7 +26,6 @@ const createProduct = async (req, res) => {
   }
 };
 
-// --- READ ALL products (Hybrid query logic) ---
 const getAllProducts = async (req, res) => {
   try {
     const { search, category, college } = req.query;
@@ -50,17 +48,12 @@ const getAllProducts = async (req, res) => {
   }
 };
 
-// --- READ ONE product by its ID ---
 const getProductById = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id)
       .populate({
-        path: 'user',
-        select: 'fullName role college',
-        populate: {
-          path: 'college',
-          select: 'name'
-        }
+        path: 'user', select: 'fullName role college',
+        populate: { path: 'college', select: 'name' }
       });
     if (!product) return res.status(404).json({ message: 'Product not found' });
     res.json(product);
@@ -70,7 +63,6 @@ const getProductById = async (req, res) => {
   }
 };
 
-// --- READ ALL products by a specific User ID ---
 const getProductsByUserId = async (req, res) => {
   try {
     const products = await Product.find({ user: req.params.userId }).sort({ createdAt: -1 });
@@ -81,7 +73,6 @@ const getProductsByUserId = async (req, res) => {
   }
 };
 
-// --- UPDATE a product ---
 const updateProduct = async (req, res) => {
   try {
     let product = await Product.findById(req.params.id);
@@ -104,7 +95,6 @@ const updateProduct = async (req, res) => {
   }
 };
 
-// --- DELETE a product ---
 const deleteProduct = async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -122,11 +112,4 @@ const deleteProduct = async (req, res) => {
   }
 };
 
-module.exports = {
-  createProduct,
-  getAllProducts,
-  getProductById,
-  getProductsByUserId,
-  updateProduct,
-  deleteProduct,
-};
+module.exports = { createProduct, getAllProducts, getProductById, getProductsByUserId, updateProduct, deleteProduct };
