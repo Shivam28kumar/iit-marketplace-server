@@ -8,6 +8,11 @@ const MessageSchema = new Schema({
     ref: 'User',
     required: true,
   },
+  conversationId: { // <-- ADD THIS
+    type: Schema.Types.ObjectId,
+    ref: 'Conversation',
+    required: true,
+},
   receiverId: {
     type: Schema.Types.ObjectId,
     ref: 'User',

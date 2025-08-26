@@ -9,6 +9,6 @@ router.get('/conversations', authMiddleware, chatController.getUserConversations
 router.get('/unread-count', authMiddleware, chatController.getUnreadCount);
 router.get('/:id', authMiddleware, chatController.getMessages);
 router.post('/send/:id', authMiddleware, chatController.sendMessage);
-router.put('/read/:conversationId', authMiddleware, chatController.markAsRead);
+router.put('/read/:id', authMiddleware, chatController.markAsRead); // :id is the other user's ID
 
 module.exports = router;

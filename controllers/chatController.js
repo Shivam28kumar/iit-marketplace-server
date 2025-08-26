@@ -1,64 +1,61 @@
 // server/controllers/chatController.js
-
-// --- MODULE IMPORTS using CommonJS 'require' ---
+// server/controllers/chatController.js
 const Conversation = require('../models/Conversation.js');
 const Message = require('../models/Message.js');
 const User = require('../models/User.js');
 const { getReceiverSocketId, io } = require('../socket/socket.js');
 
-// --- SEND a message (Role-aware) ---
-// This function's internal logic is identical to your working version.
+// --- SEND a message ---
 const sendMessage = async (req, res) => {
     try {
         const { message, productId } = req.body;
         const { id: receiverId } = req.params;
         const senderId = req.user.id;
-        const [sender, receiver] = await Promise.all([
-            User.findById(senderId),
-            User.findById(receiverId)
-        ]);
-        if (!sender || !receiver) {
-            return res.status(404).json({ message: "User not found." });
+
+        if (!productId) return res.status(400).json({ message: "Product ID is required." });
+        
+        const [sender, receiver] = await Promise.all([ User.findById(senderId), User.findById(receiverId) ]);
+        if (!sender || !receiver) return res.status(404).json({ message: "User not found." });
+        if (sender.role === 'user' && receiver.role === 'user' && sender.college.toString() !== receiver.college.toString()) {
+            return res.status(403).json({ message: "Peer-to-peer chat is only allowed within the same college." });
         }
-        if (sender.role === 'user' && receiver.role === 'user') {
-            if (sender.college.toString() !== receiver.college.toString()) {
-                return res.status(403).json({ message: "Peer-to-peer chat is only allowed within the same college." });
-            }
-        }
-        let conversation = await Conversation.findOne({
-            participants: { $all: [senderId, receiverId] },
-            product: productId,
-        });
+
+        let conversation = await Conversation.findOne({ participants: { $all: [senderId, receiverId] }, product: productId });
         if (!conversation) {
-            conversation = await Conversation.create({
-                participants: [senderId, receiverId],
-                product: productId,
-            });
+            conversation = await Conversation.create({ participants: [senderId, receiverId], product: productId });
         }
-        const newMessage = new Message({ senderId, receiverId, message });
-        if (newMessage) {
+
+        if (message && message.trim() !== '') {
+            const newMessage = new Message({
+                senderId,
+                receiverId,
+                message,
+                conversationId: conversation._id, // <-- Add the conversationId
+            });
             conversation.messages.push(newMessage._id);
             conversation.lastMessage = newMessage._id;
+            await Promise.all([conversation.save(), newMessage.save()]);
+            
+            const receiverSocketId = getReceiverSocketId(receiverId);
+            if (receiverSocketId) {
+                io.to(receiverSocketId).emit("newMessage", { newMessage, conversationId: conversation._id });
+            }
+            res.status(201).json(newMessage);
+        } else {
+            res.status(201).json(null); // Respond gracefully if no message was sent
         }
-        await Promise.all([conversation.save(), newMessage.save()]);
-        const receiverSocketId = getReceiverSocketId(receiverId);
-        if (receiverSocketId) {
-            io.to(receiverSocketId).emit("newMessage", newMessage);
-        }
-        res.status(201).json(newMessage);
     } catch (error) {
         console.error("Error in sendMessage controller: ", error.message);
         res.status(500).json({ error: "Internal server error" });
     }
 };
-
-// --- GET messages for a conversation (Product-aware) ---
-// This function's internal logic is identical to your working version.
+// --- GET messages for a conversation ---
 const getMessages = async (req, res) => {
     try {
         const { id: userToChatId } = req.params;
         const senderId = req.user.id;
         const { productId } = req.query;
+
         if (!productId) {
             return res.status(400).json({ message: "Product ID is required to get messages." });
         }
@@ -66,6 +63,7 @@ const getMessages = async (req, res) => {
             participants: { $all: [senderId, userToChatId] },
             product: productId
         }).populate("messages");
+
         if (!conversation) return res.status(200).json([]);
         res.status(200).json(conversation.messages);
     } catch (error) {
@@ -75,47 +73,53 @@ const getMessages = async (req, res) => {
 };
 
 // --- GET all of a user's conversations ---
-// This function's internal logic is identical to your working version.
 const getUserConversations = async (req, res) => {
     try {
         const loggedInUserId = req.user.id;
         const conversations = await Conversation.find({ participants: loggedInUserId })
             .sort({ updatedAt: -1 })
-            .populate({
-                path: "participants",
-                select: "fullName",
-                match: { _id: { $ne: loggedInUserId } }
-            })
+            .populate({ path: "participants", select: "fullName", match: { _id: { $ne: loggedInUserId } } })
             .populate('product', ['title', 'price', 'imageUrl'])
             .populate('lastMessage');
-        res.status(200).json(conversations);
-    } catch (error) {
-        console.error("Error in getUserConversations controller: ", error.message);
-        res.status(500).json({ error: "Internal server error" });
-    }
+
+        const conversationsWithUnreadCounts = await Promise.all(
+            conversations.map(async (convo) => {
+                const unreadCount = await Message.countDocuments({
+                    conversationId: convo._id,
+                    receiverId: loggedInUserId,
+                    read: false,
+                });
+                const convoObject = convo.toObject();
+                convoObject.unreadCount = unreadCount;
+                return convoObject;
+            })
+        );
+        res.status(200).json(conversationsWithUnreadCounts);
+    } catch (error) { /* ... error handling ... */ }
 };
 
 // --- MARK messages as read ---
-// This function's internal logic is identical to your working version.
+// In server/controllers/chatController.js -> markAsRead
 const markAsRead = async (req, res) => {
     try {
-        const { conversationId } = req.params;
-        const userId = req.user.id;
-        const conversation = await Conversation.findById(conversationId);
-        if (!conversation) return res.status(404).json({ message: "Conversation not found" });
+        const { id: otherUserId } = req.params;
+        const loggedInUserId = req.user.id;
+        
         await Message.updateMany(
-            { _id: { $in: conversation.messages }, receiverId: userId, read: false },
+            { senderId: otherUserId, receiverId: loggedInUserId, read: false },
             { $set: { read: true } }
         );
+        
+        const otherUserSocketId = getReceiverSocketId(otherUserId);
+        if (otherUserSocketId) {
+            io.to(otherUserSocketId).emit("conversationsUpdated");
+        }
+
         res.status(200).json({ message: "Messages marked as read" });
-    } catch (error) {
-        console.error("Error in markAsRead controller: ", error.message);
-        res.status(500).json({ error: "Internal server error" });
-    }
+    } catch (error) { /* ... error handling ... */ }
 };
 
 // --- GET UNREAD MESSAGE COUNT ---
-// This function's internal logic is identical to your working version.
 const getUnreadCount = async (req, res) => {
     try {
         const userId = req.user.id;
@@ -134,8 +138,6 @@ const getUnreadCount = async (req, res) => {
     }
 };
 
-// --- MODULE EXPORTS using CommonJS 'module.exports' ---
-// This makes all the functions available for the router to use.
 module.exports = {
     sendMessage,
     getMessages,
