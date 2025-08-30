@@ -12,7 +12,8 @@ const server = http.createServer(app);
 // Define your specific allowed origins.
 const allowedOrigins = [
     'http://localhost:3000',
-    'https://iit-marketplace-client.vercel.app' // VERIFY THIS IS YOUR EXACT VERCEL URL
+    'https://iit-marketplace-client.vercel.app','https://collegecommercialcentre.in',         // The root domain
+    'https://www.collegecommercialcentre.in'      // The www subdomain // VERIFY THIS IS YOUR EXACT VERCEL URL
 ];
 
 // Configure the CORS options.
