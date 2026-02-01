@@ -1,6 +1,7 @@
 // server/controllers/adminController.js
 
 // --- MODULE IMPORTS using CommonJS 'require' ---
+const bcrypt = require('bcryptjs'); // Fixed: Changed from import to require
 const User = require('../models/User.js');
 const Product = require('../models/Product.js');
 const College = require('../models/College.js');
@@ -31,6 +32,76 @@ const deleteUser = async (req, res) => {
         res.json({ message: 'User removed successfully' });
     } catch (err) {
         console.error("Admin Controller Error (deleteUser):", err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// --- Shop Management (NEW) ---
+
+// @desc    Admin creates a new Shop Account
+const createShop = async (req, res) => {
+    const { fullName, email, password, shopName, description, deliveryTime, minOrderValue } = req.body;
+    
+    if (!req.file) {
+        return res.status(400).json({ message: 'Please upload a Shop Logo' });
+    }
+
+    try {
+        // 1. Check if email exists
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return res.status(400).json({ message: 'User with this email already exists' });
+        }
+
+        // 2. Upload Logo to Cloudinary
+        const result = await cloudinary.uploader.upload(req.file.path, {
+            folder: 'iit-marketplace-shops',
+        });
+
+        // 3. Hash Password
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt);
+
+        // 4. Create User with 'shop' role
+        const newShop = new User({
+            fullName,
+            email,
+            password: hashedPassword,
+            role: 'shop',
+            isEmailVerified: true, // Auto-verify since Admin created it
+            shopDetails: {
+                shopName,
+                description,
+                deliveryTime: deliveryTime || "15-20 mins",
+                imageUrl: result.secure_url,
+                isOpen: true,
+                minOrderValue: Number(minOrderValue) || 0
+            }
+        });
+
+        await newShop.save();
+        res.status(201).json(newShop);
+
+    } catch (err) {
+        console.error("Admin Controller Error (createShop):", err.message);
+        res.status(500).send('Server Error');
+    }
+};
+
+// @desc    Admin deletes a shop
+const deleteShop = async (req, res) => {
+    try {
+        const shop = await User.findById(req.params.id);
+        if (!shop || shop.role !== 'shop') {
+            return res.status(404).json({ message: 'Shop not found' });
+        }
+        
+        // Optional: Delete shop's logo from Cloudinary here if needed
+        
+        await User.findByIdAndDelete(req.params.id);
+        res.json({ message: 'Shop removed successfully' });
+    } catch (err) {
+        console.error("Admin Controller Error (deleteShop):", err.message);
         res.status(500).send('Server Error');
     }
 };
@@ -132,6 +203,8 @@ const deleteBanner = async (req, res) => {
 module.exports = {
     getAllUsers,
     deleteUser,
+    createShop,   // <-- Added
+    deleteShop,   // <-- Added
     deleteProduct,
     createCollege,
     deleteCollege,

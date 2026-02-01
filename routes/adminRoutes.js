@@ -34,5 +34,7 @@ router.delete('/colleges/:id', adminOnly, adminController.deleteCollege);
 router.post('/banners', adminOnly, upload.single('image'), adminController.createBanner);
 router.delete('/banners/:id', adminOnly, adminController.deleteBanner);
 
+router.post('/shops', adminOnly, upload.single('image'), adminController.createShop);
+router.delete('/shops/:id', adminOnly, adminController.deleteShop);
 // --- MODULE EXPORTS using CommonJS 'module.exports' ---
 module.exports = router;
