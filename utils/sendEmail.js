@@ -1,44 +1,43 @@
 // server/utils/sendEmail.js
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 const dotenv = require('dotenv');
 
 dotenv.config();
 
+// Initialize Resend with your API Key from .env
+const resend = new Resend(process.env.RESEND_API_KEY);
+
 const sendEmail = async (options) => {
-  const transporter = nodemailer.createTransport({
-    // We explicitly use Port 465 for SSL which is more stable on Render
-    host: 'smtp.gmail.com',
-    port: 465,
-    secure: true, // MUST be true for port 465
-    auth: {
-      user: process.env.EMAIL_USER,
-      pass: process.env.EMAIL_PASS,
-    },
-    tls: {
-      // This helps prevent connection drops on cloud servers
-      rejectUnauthorized: false
-    },
-    connectionTimeout: 20000, 
-  });
-
-  const mailOptions = {
-    from: `"IIT Marketplace" <${process.env.EMAIL_USER}>`,
-    to: options.email,
-    subject: options.subject,
-    text: options.message,
-    html: `<div style="font-family: Arial; padding: 20px; border: 1px solid #eee;">
-             <h2 style="color: #ff7a00;">IIT Marketplace</h2>
-             <p>${options.message.replace(/\n/g, '<br>')}</p>
-           </div>`,
-  };
-
   try {
-    console.log(`Attempting SSL connection to Gmail for: ${options.email}`);
-    const info = await transporter.sendMail(mailOptions);
-    console.log(`Email sent successfully: ${info.messageId}`);
-  } catch (error) {
-    console.error("Nodemailer Detail Error:", error);
-    throw new Error("Email could not be sent.");
+    console.log(`[Resend API] Sending email to: ${options.email}`);
+
+    const { data, error } = await resend.emails.send({
+      // IMPORTANT: On the free tier, you must send from this address:
+      from: 'IIT Marketplace <onboarding@resend.dev>',
+      to: options.email,
+      subject: options.subject,
+      text: options.message,
+      html: `
+        <div style="font-family: sans-serif; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #ff7a00;">IIT Marketplace</h2>
+          <p style="font-size: 16px; line-height: 1.5;">${options.message.replace(/\n/g, '<br>')}</p>
+          <hr style="border: 0; border-top: 1px solid #eee; margin: 20px 0;">
+          <p style="font-size: 12px; color: #888;">This is an automated security code for your campus account.</p>
+        </div>
+      `,
+    });
+
+    if (error) {
+      console.error("[Resend Error]:", error);
+      throw new Error("Failed to send email via API.");
+    }
+
+    console.log(`[Resend API] Email Sent! ID: ${data.id}`);
+    return data;
+
+  } catch (err) {
+    console.error("[Resend API] Critical Failure:", err);
+    throw new Error("Email service currently unavailable.");
   }
 };
 
