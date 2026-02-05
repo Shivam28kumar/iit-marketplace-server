@@ -13,7 +13,7 @@ const sendEmail = async (options) => {
 
     const { data, error } = await resend.emails.send({
       // IMPORTANT: On the free tier, you must send from this address:
-      from: 'IIT Marketplace <onboarding@resend.dev>',
+      from: 'IIT Marketplace <verify@collegecommercialcentre.in>',
       to: options.email,
       subject: options.subject,
       text: options.message,
